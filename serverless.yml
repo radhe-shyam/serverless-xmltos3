@@ -1,0 +1,43 @@
+service: xmltos3
+
+frameworkVersion: "3"
+
+custom:
+  BUCKET_NAME: xmltos3
+  DISTRIBUTION_KEY: E15CLV96KCV8R1
+
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  stage: dev
+  region: ap-south-1
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:PutObjectAcl
+          Resource: "arn:aws:s3:::${self:custom.BUCKET_NAME}/*"
+        - Effect: Allow
+          Action:
+            - cloudfront:CreateInvalidation
+          Resource: "arn:aws:cloudfront::*:distribution/${self:custom.DISTRIBUTION_KEY}"
+
+functions:
+  save:
+    handler: handler.save    
+    events:
+      - httpApi:
+          path: /
+          method: get
+    environment:
+      BUCKET_NAME: ${self:custom.BUCKET_NAME}
+      SITEMAP: "https://hsts-staging.dypstick.com/sitemap.xml"
+      NEW_HOST: "https://new.com"
+      DISTRIBUTION_KEY: E15CLV96KCV8R1
+      FILE_NAME: xmltos3.xml
+
+plugins:
+  - serverless-offline
